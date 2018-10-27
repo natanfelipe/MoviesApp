@@ -12,7 +12,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 public class BaseActivity extends AppCompatActivity {
 
     protected TmdbApi api = new Retrofit.Builder()
-            .baseUrl(TmdbApi.URL)
+            .baseUrl(com.arctouch.codechallenge.BuildConfig.URL)
             .client(new OkHttpClient.Builder().build())
             .addConverterFactory(MoshiConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
