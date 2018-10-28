@@ -2,6 +2,7 @@ package com.arctouch.codechallenge.base;
 
 import android.support.v7.app.AppCompatActivity;
 
+import com.arctouch.codechallenge.BuildConfig;
 import com.arctouch.codechallenge.api.TmdbApi;
 
 import okhttp3.OkHttpClient;
@@ -12,7 +13,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 public class BaseActivity extends AppCompatActivity {
 
     protected TmdbApi api = new Retrofit.Builder()
-            .baseUrl(TmdbApi.URL)
+            .baseUrl(BuildConfig.URL)
             .client(new OkHttpClient.Builder().build())
             .addConverterFactory(MoshiConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
