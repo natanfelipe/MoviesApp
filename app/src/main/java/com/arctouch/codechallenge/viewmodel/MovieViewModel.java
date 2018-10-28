@@ -60,12 +60,5 @@ public class MovieViewModel extends ViewModel {
         return movieLiveData;
     }
 
-    public void retry() {
-        movieDataFactory.getMoviesDataSourceLiveData().getValue().retry();
-    }
-
-    public void refresh() {
-        movieDataFactory.getMoviesDataSourceLiveData().getValue().invalidate();
-    }
 
 }

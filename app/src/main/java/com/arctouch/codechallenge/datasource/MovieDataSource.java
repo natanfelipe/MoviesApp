@@ -2,7 +2,9 @@ package com.arctouch.codechallenge.datasource;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.paging.PageKeyedDataSource;
+import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.arctouch.codechallenge.BuildConfig;
 import com.arctouch.codechallenge.api.TmdbApi;
@@ -11,6 +13,7 @@ import com.arctouch.codechallenge.data.Cache;
 import com.arctouch.codechallenge.model.Genre;
 import com.arctouch.codechallenge.model.Movie;
 import com.arctouch.codechallenge.util.NetworkState;
+import com.arctouch.codechallenge.view.ui.HomeActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,6 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
     private static final Long FIRST_PAGE = 1L;
     CompositeDisposable compositeDisposable;
     private TmdbApi restApiFactory;
-    private Completable retryCompletable;
 
 
     public MovieDataSource(TmdbApi restApiFactory, CompositeDisposable compositeDisposable) {
@@ -39,9 +41,6 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
         initialLoading = new MutableLiveData();
     }
 
-    public MutableLiveData<NetworkState> getInitialLoading() {
-        return initialLoading;
-    }
 
     public MutableLiveData<NetworkState> getNetworkState(){
         return networkState;
@@ -52,7 +51,6 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
                             @NonNull LoadInitialCallback<Long, Movie> callback) {
                     initialLoading.postValue(NetworkState.LOADING);
                     networkState.postValue(NetworkState.LOADING);
-                    if(compositeDisposable != null)
                     createObservable(FIRST_PAGE,FIRST_PAGE+1,params.requestedLoadSize,callback,null);
     }
 
@@ -75,8 +73,20 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
         private void createObservable(Long requestedPage, Long nextPage, int requestedLoadSize,
                                       LoadInitialCallback<Long,Movie> initialCallback,LoadCallback<Long,Movie> callback){
 
+            if(requestedPage == FIRST_PAGE) {
+                Log.d(TAG, "NOT CACHED");
+                restApiFactory.genres(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(response -> {
+                            Cache.setGenres(response.genres);
+                        });
+            } else {
+                Log.d(TAG, "CACHED");
+            }
 
-                compositeDisposable.add(restApiFactory.upcomingMovies(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE,
+
+            compositeDisposable.add(restApiFactory.upcomingMovies(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE,
                         requestedPage).subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -99,15 +109,5 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
                                 }
                         ));
         }
-
-    public void retry() {
-        if (retryCompletable != null) {
-            compositeDisposable.add(retryCompletable
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(() -> {
-                    }, throwable -> Timber.e(throwable.getMessage())));
-        }
-    }
 
 }
