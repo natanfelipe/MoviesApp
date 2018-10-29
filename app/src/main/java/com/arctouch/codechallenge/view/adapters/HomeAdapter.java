@@ -62,12 +62,11 @@ public class HomeAdapter extends PagedListAdapter<Movie,HomeAdapter.ViewHolder> 
             binding.releaseDateTextView.setText(movie.releaseDate);
 
             String posterPath = movie.posterPath;
-            if (TextUtils.isEmpty(posterPath) == false) {
                 Glide.with(itemView)
-                        .load(movieImageUrlBuilder.buildPosterUrl(posterPath))
+                        .load(movieImageUrlBuilder.buildPosterUrl(posterPath != null ? posterPath : "" ))
                         .apply(new RequestOptions().placeholder(R.drawable.ic_image_placeholder))
                         .into(binding.posterImageView);
-            }
+
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
