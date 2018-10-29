@@ -82,7 +82,7 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
 
 
             compositeDisposable.add(restApiFactory.upcomingMovies(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE,
-                        requestedPage).subscribeOn(Schedulers.io())
+                        requestedPage,BuildConfig.DEFAULT_REGION).subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 upcomingMoviesResponse -> {
