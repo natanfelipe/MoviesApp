@@ -1,10 +1,11 @@
 package com.arctouch.codechallenge.datasource;
 
+import android.app.Activity;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.paging.PageKeyedDataSource;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.arctouch.codechallenge.BuildConfig;
 import com.arctouch.codechallenge.api.TmdbApi;
@@ -16,13 +17,9 @@ import com.arctouch.codechallenge.util.NetworkState;
 import com.arctouch.codechallenge.view.ui.HomeActivity;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import io.reactivex.Completable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
 
@@ -32,6 +29,7 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
     private static final Long FIRST_PAGE = 1L;
     CompositeDisposable compositeDisposable;
     private TmdbApi restApiFactory;
+
 
 
     public MovieDataSource(TmdbApi restApiFactory, CompositeDisposable compositeDisposable) {
@@ -74,15 +72,12 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
                                       LoadInitialCallback<Long,Movie> initialCallback,LoadCallback<Long,Movie> callback){
 
             if(requestedPage == FIRST_PAGE) {
-                Log.d(TAG, "NOT CACHED");
                 restApiFactory.genres(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(response -> {
                             Cache.setGenres(response.genres);
                         });
-            } else {
-                Log.d(TAG, "CACHED");
             }
 
 

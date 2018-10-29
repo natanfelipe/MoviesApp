@@ -23,6 +23,7 @@ public class RestApiFactory{
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         httpClient.addInterceptor(logging);
 
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BuildConfig.URL)
                 .client(new OkHttpClient.Builder().build())
