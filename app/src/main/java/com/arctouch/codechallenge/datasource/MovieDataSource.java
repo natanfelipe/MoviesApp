@@ -17,9 +17,16 @@ import com.arctouch.codechallenge.util.NetworkState;
 import com.arctouch.codechallenge.view.ui.HomeActivity;
 
 import java.util.ArrayList;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+
+import static io.reactivex.Single.concat;
 
 public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
 
@@ -28,6 +35,7 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
     private static final String TAG = MovieDataSource.class.getSimpleName();
     private static final Long FIRST_PAGE = 1L;
     CompositeDisposable compositeDisposable;
+
     private TmdbApi restApiFactory;
 
 
@@ -71,38 +79,32 @@ public class MovieDataSource extends PageKeyedDataSource<Long,Movie> {
         private void createObservable(Long requestedPage, Long nextPage, int requestedLoadSize,
                                       LoadInitialCallback<Long,Movie> initialCallback,LoadCallback<Long,Movie> callback){
 
-            if(requestedPage == FIRST_PAGE) {
-                restApiFactory.genres(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(response -> {
-                            Cache.setGenres(response.genres);
-                        });
-            }
-
-
-            compositeDisposable.add(restApiFactory.upcomingMovies(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE,
-                        requestedPage,BuildConfig.DEFAULT_REGION).subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                upcomingMoviesResponse -> {
-                                    for (Movie movie : upcomingMoviesResponse.results) {
-                                        movie.genres = new ArrayList<>();
-                                        for (Genre genre : Cache.getGenres()) {
-                                            if (movie.genreIds.contains(genre.id)) {
-                                                movie.genres.add(genre);
-                                            }
+            compositeDisposable.addAll(restApiFactory.genres(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(response -> {
+                        Cache.setGenres(response.genres);
+                    }),restApiFactory.upcomingMovies(BuildConfig.API_KEY, BuildConfig.DEFAULT_LANGUAGE,
+                    requestedPage,BuildConfig.DEFAULT_REGION).subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            upcomingMoviesResponse -> {
+                                for (Movie movie : upcomingMoviesResponse.results) {
+                                    movie.genres = new ArrayList<>();
+                                    for (Genre genre : Cache.getGenres()) {
+                                        if (movie.genreIds.contains(genre.id)) {
+                                            movie.genres.add(genre);
                                         }
                                     }
-                                    if(initialCallback != null)
-                                      initialCallback.onResult(upcomingMoviesResponse.results,null,nextPage);
-                                    if(callback != null)
-                                      callback.onResult(upcomingMoviesResponse.results,nextPage);
-                                    networkState.postValue(NetworkState.LOADED);
-                                    initialLoading.postValue(NetworkState.LOADED);
-                                }, throwable -> {
                                 }
-                        ));
+                                if(initialCallback != null)
+                                    initialCallback.onResult(upcomingMoviesResponse.results,null,nextPage);
+                                if(callback != null)
+                                    callback.onResult(upcomingMoviesResponse.results,nextPage);
+                                networkState.postValue(NetworkState.LOADED);
+                                initialLoading.postValue(NetworkState.LOADED);
+                            }, throwable -> {
+                            }
+                    ));
         }
-
 }
